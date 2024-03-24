@@ -6,6 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -13,6 +16,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.postegresql.model.Game;
+import com.postegresql.model.Move;
 import com.postegresql.service.GameService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,8 +76,54 @@ class ApiApplicationTests {
 		verify(gameService).getAllGames();
 	}
 
+	 public void testDeleteAllGames() throws Exception {
+        mockMvc.perform(delete("/api/game/deleteAllGames"))
+                .andExpect(status().isOk());
 
+        verify(gameService, times(1)).deleteAllGames();
+    }
 
+    @Test
+    public void testPlayMove() throws Exception {
+        Move move = new Move(1L, 0, "X");
+        Game game = new Game(); // Mock game as needed
+        when(gameService.playMove(anyLong(), anyInt(), anyString())).thenReturn(game);
 
+        mockMvc.perform(post("/api/game/playMove")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(move)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
+        verify(gameService, times(1)).playMove(anyLong(), anyInt(), anyString());
+    }
+	
+    @Test
+    public void testCheckVictory() throws Exception {
+        Long gameId = 1L;
+        String result = "X wins";
+        when(gameService.checkVictory(gameId)).thenReturn(result);
+
+        mockMvc.perform(get("/api/game/checkVictory/{gameId}", gameId))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Result: " + result));
+
+        verify(gameService, times(1)).checkVictory(gameId);
+    }
+
+    @Test
+    public void testChangePlayer() throws Exception {
+        Long gameId = 1L;
+        Game game = new Game(); // Mock game as needed
+        when(gameService.changePlayer(gameId)).thenReturn(game);
+
+        mockMvc.perform(get("/api/game/changePlayer/{gameId}", gameId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        verify(gameService, times(1)).changePlayer(gameId);
+    }
 }
+
+
+
